@@ -143,47 +143,6 @@ function closeMenu() {
 }
 
 /* =========================
-   HIRE ME BUTTON
-   ========================= */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  height: 44px;
-  padding: 0 18px;
-
-  border: 1px solid transparent;
-  border-radius: 12px;
-
-  font-size: 14px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease;
-}
-
-.btn-primary {
-  background: linear-gradient(180deg, var(--color-primary-light), var(--color-primary));
-
-  color: #0b0f1a;
-
-  box-shadow: 0 10px 26px rgba(255, 93, 74, 0.22);
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-
-  box-shadow: 0 16px 34px rgba(255, 93, 74, 0.26);
-}
-
-/* =========================
    TOOLS BUTTON
    ========================= */
 
