@@ -1,6 +1,7 @@
 <script setup>
 import MainNavbar from '@/components/MainNavbar.vue'
 import HeroSection from '@/components/HeroSection.vue'
+import TickerSection from '@/components/TickerSection.vue'
 </script>
 
 <template>
@@ -8,6 +9,7 @@ import HeroSection from '@/components/HeroSection.vue'
     <MainNavbar />
     <main>
       <HeroSection />
+      <TickerSection />
     </main>
   </div>
 </template>
