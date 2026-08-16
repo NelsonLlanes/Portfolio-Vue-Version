@@ -11,7 +11,7 @@ import AboutSection from '@/components/AboutSection.vue'
     <main>
       <HeroSection />
       <TickerSection />
-      <AboutSection />
+      <AboutSection />  
     </main>
   </div>
 </template>

@@ -12,16 +12,17 @@
 
         <div class="about-content">
           <h2 class="section-title">About me</h2>
+
+          <p class="about-intro">I build software with a practical mindset.</p>
           <p class="muted">
-            I’m an entry-level Full-Stack Developer focused on building practical, user-centered web
-            applications. I enjoy transforming ideas into functional solutions by writing clean,
-            readable code and breaking down problems into manageable steps.
+            My approach to development starts with understanding the problem before writing the
+            solution. I focus on building applications that are clear, useful, and intentionally
+            designed around what they actually need to accomplish.
           </p>
           <p>
-            I come from an operations and inventory background, which has shaped my structured,
-            detail-oriented approach to software development. I value clarity, organization, and
-            continuous learning, and I’m comfortable working both independently and in collaborative
-            environments.
+            I value simple solutions, clean structure, and reusable code. I break complex problems
+            into smaller pieces and build with maintainability in mind, so projects can evolve
+            without becoming unnecessarily complicated.
           </p>
           <div class="social">
             <a
@@ -46,25 +47,27 @@
       <div class="about-cards">
         <article class="about-card">
           <div class="about-card__icon">
-            <!-- Card icon -->
-            <i class="fa-solid fa-bullseye"></i>
+            <i class="fa-solid fa-code"></i>
           </div>
-          <h3 class="about-card__title">Current Focus</h3>
+
+          <h3 class="about-card__title">How I Build</h3>
+
           <p class="about-card__text">
-            Building small full-stack projects, improving problem-solving, and strengthening
-            fundamentals.
+            Clean, readable, and reusable code. I prefer straightforward solutions over unnecessary
+            complexity.
           </p>
         </article>
 
         <article class="about-card">
           <div class="about-card__icon">
-            <!-- Card icon -->
-            <i class="fa-solid fa-rocket"></i>
+            <i class="fa-solid fa-layer-group"></i>
           </div>
-          <h3 class="about-card__title">Next Goals</h3>
+
+          <h3 class="about-card__title">How I Think</h3>
+
           <p class="about-card__text">
-            Gain real-world experience, collaborate on projects, and move into a junior developer
-            role.
+            Understand the problem, break it into manageable pieces, and build a solution that can
+            adapt and grow over time.
           </p>
         </article>
       </div>
