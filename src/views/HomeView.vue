@@ -6,11 +6,14 @@ import AboutSection from '@/components/AboutSection.vue'
 import SkillSection from '@/components/SkillSection.vue'
 import ProjectsSection from '@/components/ProjectsSection.vue'
 import ContactSection from '@/components/ContactSection.vue'
+import ToolsModal from '@/components/toolsModal.vue'
+import { ref } from 'vue'
+const toolsOpen = ref(false)
 </script>
 
 <template>
   <div class="home">
-    <MainNavbar />
+    <MainNavbar @open-tools="toolsOpen = true" />
     <main>
       <HeroSection />
       <TickerSection />
@@ -19,6 +22,7 @@ import ContactSection from '@/components/ContactSection.vue'
       <SkillSection />
       <ProjectsSection />
       <ContactSection />
+      <ToolsModal :open="toolsOpen" @close="toolsOpen = false" />
     </main>
   </div>
 </template>

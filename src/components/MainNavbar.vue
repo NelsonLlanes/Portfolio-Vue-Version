@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 
 const menuOpen = ref(false)
+const emit = defineEmits(['open-tools'])
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -40,6 +41,7 @@ function closeMenu() {
           data-tools-open
           aria-haspopup="dialog"
           aria-controls="toolsDialog"
+          @click="emit('open-tools')"
         >
           <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
           <span>Tools</span>
