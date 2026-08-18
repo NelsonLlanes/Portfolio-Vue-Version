@@ -28,6 +28,9 @@ coverage
 
 .eslintcache
 
+# Contact form private configuration
+public/config/contact.local.php
+
 # Cypress
 /cypress/videos/
 /cypress/screenshots/

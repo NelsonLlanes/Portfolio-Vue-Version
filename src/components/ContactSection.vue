@@ -4,10 +4,11 @@ import { reactive, ref } from 'vue'
 const form = reactive({
   name: '',
   email: '',
-  subject: '',
   message: '',
-  website: '', // honeypot
+  website: '',
 })
+
+const formStarted = Date.now()
 
 const isSending = ref(false)
 const status = ref('')
@@ -15,16 +16,36 @@ const status = ref('')
 async function submitForm() {
   status.value = ''
 
-  // La validación del frontend irá aquí.
+  const formData = new FormData()
+
+  formData.append('name', form.name)
+  formData.append('email', form.email)
+  formData.append('message', form.message)
+  formData.append('website', form.website)
+  formData.append('form_started', String(formStarted))
 
   try {
     isSending.value = true
 
-    // Aquí conectaremos posteriormente el endpoint real.
-    // await fetch('/api/contact', { ... })
+    const response = await fetch('/api/contact.php', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Unable to send message.')
+    }
 
     status.value = 'success'
+
+    form.name = ''
+    form.email = ''
+    form.message = ''
+    form.website = ''
   } catch (error) {
+    console.error(error)
     status.value = 'error'
   } finally {
     isSending.value = false
