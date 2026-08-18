@@ -3,6 +3,9 @@ import MainNavbar from '@/components/MainNavbar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import TickerSection from '@/components/TickerSection.vue'
 import AboutSection from '@/components/AboutSection.vue'
+import SkillSection from '@/components/SkillSection.vue'
+import ProjectsSection from '@/components/ProjectsSection.vue'
+import ContactSection from '@/components/ContactSection.vue'
 </script>
 
 <template>
@@ -11,7 +14,11 @@ import AboutSection from '@/components/AboutSection.vue'
     <main>
       <HeroSection />
       <TickerSection />
-      <AboutSection />  
+      <AboutSection />
+      <TickerSection />
+      <SkillSection />
+      <ProjectsSection />
+      <ContactSection />
     </main>
   </div>
 </template>

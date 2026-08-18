@@ -226,4 +226,10 @@
     transform 160ms ease,
     border-color 160ms ease;
 }
+@media (max-width: 768px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
 </style>
