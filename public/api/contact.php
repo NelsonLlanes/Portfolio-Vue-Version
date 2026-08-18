@@ -25,10 +25,10 @@ if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 20000) {
     respond(413, ['ok' => false, 'error' => 'Request is too large.']);
 }
 
-require __DIR__ . '../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 $config = [];
-$localConfig = __DIR__ . '../config/contact.local.php';
+$localConfig = __DIR__ . '/../config/contact.local.php';
 if (is_file($localConfig)) {
     $loaded = require $localConfig;
     if (is_array($loaded)) $config = $loaded;

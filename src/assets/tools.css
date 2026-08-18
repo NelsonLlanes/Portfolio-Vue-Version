@@ -1,0 +1,198 @@
+.tools-page {
+  --tool-bg: #f7f9fc;
+
+  --tool-surface: #ffffff;
+  --tool-surface-soft: #f3f6fa;
+
+  --tool-text: #172033;
+  --tool-text-muted: #737f91;
+
+  --tool-border: #dfe5ed;
+
+  --tool-primary: #2f6fdb;
+  --tool-primary-hover: #245fc2;
+  --tool-primary-soft: #edf3ff;
+
+  --tool-danger: #d64545;
+
+  --tool-shadow-sm: 0 2px 8px rgba(27, 49, 83, 0.06);
+  --tool-shadow-md: 0 18px 45px rgba(27, 49, 83, 0.12);
+
+  --tool-radius-sm: 8px;
+  --tool-radius: 12px;
+  --tool-radius-lg: 20px;
+
+  --tool-container-width: 90%;
+  --tool-container-max: 1400px;
+
+  min-height: 100vh;
+
+  background: var(--tool-bg);
+  color: var(--tool-text);
+}
+
+/* =========================================================
+   Shared container
+========================================================= */
+
+.tools-page .tool-container {
+  width: var(--tool-container-width);
+  max-width: var(--tool-container-max);
+
+  margin-inline: auto;
+}
+
+/* =========================================================
+   Typography helpers
+========================================================= */
+
+.tools-page .tool-muted {
+  color: var(--tool-text-muted);
+}
+
+.tools-page .tool-eyebrow {
+  margin: 0;
+
+  color: var(--tool-text-muted);
+
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   Shared surfaces
+========================================================= */
+
+.tools-page .tool-surface {
+  background: var(--tool-surface);
+
+  border: 1px solid var(--tool-border);
+  border-radius: var(--tool-radius-lg);
+
+  box-shadow: var(--tool-shadow-sm);
+}
+
+/* =========================================================
+   Shared buttons
+========================================================= */
+
+.tools-page .tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.5rem;
+
+  border: 1px solid var(--tool-border);
+  border-radius: var(--tool-radius);
+
+  padding: 0.75rem 1rem;
+
+  background: var(--tool-surface);
+  color: var(--tool-text);
+
+  font: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.tools-page .tool-button:hover {
+  background: var(--tool-surface-soft);
+}
+
+.tools-page .tool-button:active {
+  transform: scale(0.98);
+}
+
+/* Primary */
+
+.tools-page .tool-button.tool-button--primary {
+  background: var(--tool-primary);
+  border-color: var(--tool-primary);
+  color: #ffffff;
+}
+
+.tools-page .tool-button.tool-button--primary:hover {
+  background: var(--tool-primary-hover);
+  border-color: var(--tool-primary-hover);
+}
+
+/* Disabled */
+
+.tools-page .tool-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   Shared fields
+========================================================= */
+
+.tools-page .tool-field {
+  width: 100%;
+
+  padding: 0.8rem 1rem;
+
+  border: 1px solid var(--tool-border);
+  border-radius: var(--tool-radius);
+
+  background: var(--tool-surface);
+  color: var(--tool-text);
+
+  font: inherit;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tools-page .tool-field::placeholder {
+  color: var(--tool-text-muted);
+}
+
+.tools-page .tool-field:focus {
+  border-color: var(--tool-accent);
+
+  box-shadow: 0 0 0 3px rgba(255, 93, 74, 0.12);
+}
+
+/* =========================================================
+   Accessibility
+========================================================= */
+
+.tools-page button,
+.tools-page input,
+.tools-page textarea,
+.tools-page select {
+  font: inherit;
+}
+
+.tools-page button:focus-visible,
+.tools-page a:focus-visible,
+.tools-page input:focus-visible,
+.tools-page textarea:focus-visible,
+.tools-page select:focus-visible {
+  outline: 3px solid rgba(255, 93, 74, 0.25);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 768px) {
+  .tools-page {
+    --tool-container-width: 94%;
+  }
+}

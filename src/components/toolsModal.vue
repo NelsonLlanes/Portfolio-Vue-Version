@@ -52,7 +52,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="tools-list">
-          <a class="tool-item" href="/tools/qr/">
+          <a class="tool-item" href="/tools/quick-qr-code/">
             <span class="tool-icon">
               <i class="fa-solid fa-qrcode" aria-hidden="true"></i>
             </span>
