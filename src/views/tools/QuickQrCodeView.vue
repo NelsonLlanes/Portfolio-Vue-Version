@@ -4,11 +4,13 @@ import { ref } from 'vue'
 import GeneratorSection from '@/components/QuickQrcode/GeneratorSection.vue'
 import QuickQrHeader from '@/components/QuickQrcode/QuickQrHeader.vue'
 import ResultSection from '@/components/QuickQrcode/ResultSection.vue'
+import printProfilesModal from '@/components/QuickQrcode/printProfilesModal.vue'
 
 const generatedValue = ref('')
 const codeType = ref('barcode')
 const hasResult = ref(false)
 const isFavorite = ref(false)
+const printProfilesOpen = ref(false)
 
 function handleGenerate(payload) {
   generatedValue.value = payload.value
@@ -34,7 +36,7 @@ function handlePrint() {
 }
 
 function handleOpenPrintProfiles() {
-  console.log('Open print profiles')
+  printProfilesOpen.value = true
 }
 </script>
 
@@ -64,6 +66,7 @@ function handleOpenPrintProfiles() {
         />
       </section>
     </main>
+    <printProfilesModal :open="printProfilesOpen" @close="printProfilesOpen = false" />
   </div>
 </template>
 
