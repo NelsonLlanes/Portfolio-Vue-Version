@@ -10,8 +10,9 @@ const codeType = ref('barcode')
 const hasResult = ref(false)
 const isFavorite = ref(false)
 
-function handleGenerate(value) {
-  generatedValue.value = value
+function handleGenerate(payload) {
+  generatedValue.value = payload.value
+  codeType.value = payload.type
   hasResult.value = true
   isFavorite.value = false
 }
@@ -45,6 +46,7 @@ function handleOpenPrintProfiles() {
       <section class="generator-panel">
         <GeneratorSection
           :code-type="codeType"
+          :generated-value="generatedValueF"
           @generate="handleGenerate"
           @change-code-type="handleCodeTypeChange"
         />

@@ -1,7 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
+import JsBarcode from 'jsbarcode'
+import QRCode from 'qrcode'
 
-defineProps({
+const props = defineProps({
   generatedValue: {
     type: String,
     default: '',
@@ -32,6 +34,49 @@ const emit = defineEmits([
 ])
 
 const settingsOpen = ref(false)
+const qrCanvas = ref(null)
+const barcodeSvg = ref(null)
+
+async function renderCode() {
+  if (!props.hasResult || !props.generatedValue) {
+    return
+  }
+
+  await nextTick()
+
+  if (props.codeType === 'qr') {
+    if (!qrCanvas.value) {
+      return
+    }
+
+    await QRCode.toCanvas(qrCanvas.value, props.generatedValue, {
+      width: 320,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+    })
+
+    return
+  }
+
+  if (!barcodeSvg.value) {
+    return
+  }
+
+  JsBarcode(barcodeSvg.value, props.generatedValue, {
+    format: 'CODE128',
+    displayValue: false,
+    margin: 12,
+    height: 120,
+  })
+}
+
+watch(
+  () => [props.generatedValue, props.codeType, props.hasResult],
+  () => {
+    renderCode()
+  },
+  { immediate: true },
+)
 
 function toggleSettings() {
   settingsOpen.value = !settingsOpen.value
@@ -41,7 +86,15 @@ function closeSettings() {
   settingsOpen.value = false
 }
 
+function isValidCode128(value) {
+  return /^[\x20-\x7E]+$/.test(value)
+}
+
 function changeCodeType(type) {
+  if (type === 'barcode' && !isValidCode128(props.generatedValue)) {
+    return
+  }
+
   emit('change-code-type', type)
   closeSettings()
 }
@@ -134,18 +187,14 @@ function openPrintProfiles() {
           {{ generatedValue }}
         </p>
 
-        <!-- Code -->
         <div class="code-canvas" aria-label="Generated code">
-          <!--
-            Por ahora conservamos estos contenedores.
-            Después conectaremos las librerías de QR y Barcode.
-          -->
-
-          <div v-show="codeType === 'qr'" id="qrCode" class="qr-code"></div>
+          <div v-show="codeType === 'qr'" class="qr-code">
+            <canvas ref="qrCanvas" role="img" aria-label="Generated QR code"></canvas>
+          </div>
 
           <svg
             v-show="codeType === 'barcode'"
-            id="barcodeCode"
+            ref="barcodeSvg"
             class="barcode-code"
             role="img"
             aria-label="Generated barcode"
@@ -277,12 +326,12 @@ function openPrintProfiles() {
 
   padding: 8px 14px;
 
-  border: 1px solid var(--nt-border);
+  border: 1px solid var(--tool-border);
   border-radius: 999px;
 
-  background: var(--nt-surface);
+  background: var(--tool-surface);
 
-  color: var(--nt-text);
+  color: var(--tool-text);
 
   font-size: clamp(14px, 2vw, 19px);
   font-weight: 700;
@@ -292,7 +341,7 @@ function openPrintProfiles() {
 
   overflow-wrap: anywhere;
 
-  box-shadow: var(--nt-shadow-soft);
+  box-shadow: var(--tool-shadow-sm);
 }
 
 /* =========================
@@ -363,12 +412,10 @@ function openPrintProfiles() {
 
   padding: 0;
 
-  border: 1px solid var(--nt-border);
+  border: 1px solid var(--tool-border);
+  background: var(--tool-surface);
+  box-shadow: var(--tool-shadow-sm);
   border-radius: 12px;
-
-  background: var(--nt-surface);
-
-  box-shadow: var(--nt-shadow-soft);
 }
 
 .settings-button {
@@ -397,12 +444,12 @@ function openPrintProfiles() {
 
   padding: 7px;
 
-  border: 1px solid var(--nt-border);
+  border: 1px solid var(--tool-border);
   border-radius: 13px;
 
-  background: var(--nt-surface);
+  background: var(--tool-surface);
 
-  box-shadow: var(--nt-shadow);
+  box-shadow: var(--tool-shadow-sm);
 
   z-index: 8;
 }

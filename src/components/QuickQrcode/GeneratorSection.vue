@@ -1,20 +1,41 @@
 <script setup>
 import { ref } from 'vue'
 
-const emit = defineEmits(['generate'])
+const props = defineProps({
+  codeType: {
+    type: String,
+    default: 'barcode',
+  },
+  generatedValue: {
+    type: String,
+    default: '',
+  },
+})
 
-const codeType = ref('barcode')
+const emit = defineEmits(['generate', 'change-code-type'])
+
 const inputValue = ref('')
 const errorMessage = ref('')
-
 const openMenu = ref(null)
 
 const history = ref([])
 const favorites = ref([])
 const templates = ref([])
 
+function isValidCode128(value) {
+  return /^[\x20-\x7E]+$/.test(value)
+}
+
 function selectCodeType(type) {
-  codeType.value = type
+  const value = inputValue.value.trim()
+
+  if (type === 'barcode' && value && !isValidCode128(value)) {
+    errorMessage.value = 'This text is not valid for barcode.'
+    return
+  }
+
+  errorMessage.value = ''
+  emit('change-code-type', type)
 }
 
 function generateCode() {
@@ -27,9 +48,18 @@ function generateCode() {
 
   errorMessage.value = ''
 
+  if (props.codeType === 'barcode' && !isValidCode128(value)) {
+    emit('change-code-type', 'qr')
+    emit('generate', {
+      value,
+      type: 'qr',
+    })
+    return
+  }
+
   emit('generate', {
     value,
-    type: codeType.value,
+    type: props.codeType,
   })
 }
 
@@ -64,10 +94,10 @@ function createTemplate() {
     <div class="code-type" role="radiogroup" aria-label="Code type">
       <button
         class="code-type__button"
-        :class="{ 'is-active': codeType === 'barcode' }"
+        :class="{ 'is-active': props.codeType === 'barcode' }"
         type="button"
         role="radio"
-        :aria-checked="codeType === 'barcode'"
+        :aria-checked="props.codeType === 'barcode'"
         @click="selectCodeType('barcode')"
       >
         Barcode
@@ -75,10 +105,10 @@ function createTemplate() {
 
       <button
         class="code-type__button"
-        :class="{ 'is-active': codeType === 'qr' }"
+        :class="{ 'is-active': props.codeType === 'qr' }"
         type="button"
         role="radio"
-        :aria-checked="codeType === 'qr'"
+        :aria-checked="props.codeType === 'qr'"
         @click="selectCodeType('qr')"
       >
         QR
