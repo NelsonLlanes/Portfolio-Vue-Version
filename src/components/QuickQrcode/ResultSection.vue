@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import JsBarcode from 'jsbarcode'
 import QRCode from 'qrcode'
 
@@ -23,6 +23,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  profilesVersion: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits([
@@ -33,9 +37,22 @@ const emit = defineEmits([
   'open-print-profiles',
 ])
 
+const STORAGE_KEY = 'quickqr-print-profiles'
+
 const settingsOpen = ref(false)
 const qrCanvas = ref(null)
 const barcodeSvg = ref(null)
+const printProfiles = ref([])
+
+const enabledPrintProfiles = computed(() => {
+  return printProfiles.value.filter((profile) => profile.enabled)
+})
+
+const hasCustomPrintProfiles = computed(() => {
+  return enabledPrintProfiles.value.length > 0
+})
+
+// Code
 
 async function renderCode() {
   if (!props.hasResult || !props.generatedValue) {
@@ -78,6 +95,8 @@ watch(
   { immediate: true },
 )
 
+// Settings
+
 function toggleSettings() {
   settingsOpen.value = !settingsOpen.value
 }
@@ -103,22 +122,84 @@ function openPrintProfiles() {
   emit('open-print-profiles')
   closeSettings()
 }
+
+// Print profiles
+
+function loadPrintProfiles() {
+  try {
+    const savedProfiles = localStorage.getItem(STORAGE_KEY)
+
+    if (!savedProfiles) {
+      printProfiles.value = []
+      return
+    }
+
+    const parsedProfiles = JSON.parse(savedProfiles)
+
+    if (!Array.isArray(parsedProfiles)) {
+      printProfiles.value = []
+      return
+    }
+
+    printProfiles.value = parsedProfiles
+  } catch (error) {
+    console.error('Could not load print profiles:', error)
+    printProfiles.value = []
+  }
+}
+
+watch(
+  () => props.profilesVersion,
+  () => {
+    loadPrintProfiles()
+  },
+)
+
+function handleStorageChange(event) {
+  if (event.key === STORAGE_KEY) {
+    loadPrintProfiles()
+  }
+}
+
+function printGeneric() {
+  emit('print', {
+    type: 'generic',
+    profile: null,
+  })
+}
+
+function printWithProfile(profile) {
+  emit('print', {
+    type: 'profile',
+    profile,
+  })
+}
+
+onMounted(() => {
+  loadPrintProfiles()
+
+  window.addEventListener('storage', handleStorageChange)
+})
+
+watch(settingsOpen, () => {
+  loadPrintProfiles()
+})
 </script>
 
 <template>
   <div class="result-column">
-    <!-- Result Area -->
+    <!-- Result -->
+
     <div class="qr-stage">
-      <!-- Empty state -->
       <div v-if="!hasResult" class="qr-placeholder" aria-hidden="true">
         <div class="placeholder-grid"></div>
 
         <span>Your code will appear here</span>
       </div>
 
-      <!-- Generated result -->
       <div v-else class="qr-result">
         <!-- Settings -->
+
         <div class="code-settings">
           <button
             class="settings-button"
@@ -168,6 +249,7 @@ function openPrintProfiles() {
         </div>
 
         <!-- Edit -->
+
         <button
           class="edit-code"
           type="button"
@@ -182,10 +264,13 @@ function openPrintProfiles() {
           </svg>
         </button>
 
-        <!-- Generated value -->
+        <!-- Value -->
+
         <p class="generated-value" aria-live="polite">
           {{ generatedValue }}
         </p>
+
+        <!-- Code -->
 
         <div class="code-canvas" aria-label="Generated code">
           <div v-show="codeType === 'qr'" class="qr-code">
@@ -202,6 +287,7 @@ function openPrintProfiles() {
         </div>
 
         <!-- Favorite -->
+
         <button
           class="favorite-toggle"
           type="button"
@@ -220,12 +306,14 @@ function openPrintProfiles() {
     </div>
 
     <!-- Print -->
+
     <div class="print-actions" aria-label="Print options">
       <button
+        v-if="!hasCustomPrintProfiles"
         class="tool-button tool-button--primary print-main"
         type="button"
         :disabled="!hasResult"
-        @click="emit('print')"
+        @click="printGeneric"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -234,6 +322,24 @@ function openPrintProfiles() {
         </svg>
 
         <span>Print label</span>
+      </button>
+
+      <button
+        v-for="profile in enabledPrintProfiles"
+        v-else
+        :key="profile.id"
+        class="tool-button tool-button--primary print-main print-profile"
+        type="button"
+        :disabled="!hasResult"
+        @click="printWithProfile(profile)"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M19 8H5a3 3 0 0 0-3 3v5h4v4h12v-4h4v-5a3 3 0 0 0-3-3Zm-3 10H8v-5h8v5Zm3-5a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM18 3H6v4h12V3Z"
+          />
+        </svg>
+
+        <span>{{ profile.name }}</span>
       </button>
     </div>
   </div>
@@ -247,9 +353,7 @@ function openPrintProfiles() {
   flex-direction: column;
 }
 
-/* =========================
-   RESULT STAGE
-========================= */
+/* Result */
 
 .qr-stage {
   position: relative;
@@ -270,10 +374,6 @@ function openPrintProfiles() {
 
   overflow: hidden;
 }
-
-/* =========================
-   EMPTY PLACEHOLDER
-========================= */
 
 .qr-placeholder {
   display: grid;
@@ -300,10 +400,6 @@ function openPrintProfiles() {
   background-size: 38px 38px;
 }
 
-/* =========================
-   GENERATED RESULT
-========================= */
-
 .qr-result {
   position: relative;
 
@@ -314,10 +410,6 @@ function openPrintProfiles() {
 
   gap: 13px;
 }
-
-/* =========================
-   GENERATED VALUE
-========================= */
 
 .generated-value {
   max-width: calc(100% - 104px);
@@ -343,10 +435,6 @@ function openPrintProfiles() {
 
   box-shadow: var(--tool-shadow-sm);
 }
-
-/* =========================
-   CODE CANVAS
-========================= */
 
 .code-canvas {
   width: 100%;
@@ -388,9 +476,7 @@ function openPrintProfiles() {
   background: #fff;
 }
 
-/* =========================
-   SETTINGS
-========================= */
+/* Settings */
 
 .code-settings {
   display: block;
@@ -511,9 +597,7 @@ function openPrintProfiles() {
   color: var(--nt-primary) !important;
 }
 
-/* =========================
-   EDIT
-========================= */
+/* Edit */
 
 .edit-code {
   position: absolute;
@@ -532,9 +616,7 @@ function openPrintProfiles() {
   fill: var(--nt-primary);
 }
 
-/* =========================
-   FAVORITE
-========================= */
+/* Favorite */
 
 .favorite-toggle {
   display: flex;
@@ -565,14 +647,13 @@ function openPrintProfiles() {
   font-size: 18px;
 }
 
-/* =========================
-   PRINT
-========================= */
+/* Print */
 
 .print-actions {
   width: 100%;
 
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 
   gap: 8px;
 
@@ -582,19 +663,29 @@ function openPrintProfiles() {
 .print-main {
   width: 100%;
 
+  min-width: 0;
   min-height: 52px;
+
   margin-top: 0;
 }
 
 .print-main svg {
+  flex: 0 0 auto;
+
   width: 20px;
 
   fill: currentColor;
 }
 
-/* =========================
-   TABLET
-========================= */
+.print-main span {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tablet */
 
 @media (max-width: 850px) {
   .result-column {
@@ -610,9 +701,7 @@ function openPrintProfiles() {
   }
 }
 
-/* =========================
-   MOBILE
-========================= */
+/* Mobile */
 
 @media (max-width: 590px) {
   .result-column {

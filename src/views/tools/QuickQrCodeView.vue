@@ -5,12 +5,19 @@ import GeneratorSection from '@/components/QuickQrcode/GeneratorSection.vue'
 import QuickQrHeader from '@/components/QuickQrcode/QuickQrHeader.vue'
 import ResultSection from '@/components/QuickQrcode/ResultSection.vue'
 import printProfilesModal from '@/components/QuickQrcode/printProfilesModal.vue'
+import { printGenericLabel, printLabel } from '@/components/QuickQrcode/Printlabel'
 
 const generatedValue = ref('')
 const codeType = ref('barcode')
 const hasResult = ref(false)
 const isFavorite = ref(false)
+
 const printProfilesOpen = ref(false)
+const profilesVersion = ref(0)
+
+function handleProfilesUpdated() {
+  profilesVersion.value++
+}
 
 function handleGenerate(payload) {
   generatedValue.value = payload.value
@@ -31,8 +38,29 @@ function handleToggleFavorite() {
   isFavorite.value = !isFavorite.value
 }
 
-function handlePrint() {
-  window.print()
+// Print
+
+async function handlePrint(selection) {
+  if (!selection) {
+    return
+  }
+
+  if (selection.type === 'generic') {
+    await printGenericLabel({
+      value: generatedValue.value,
+      codeType: codeType.value,
+    })
+
+    return
+  }
+
+  if (selection.type === 'profile' && selection.profile) {
+    await printLabel({
+      value: generatedValue.value,
+      codeType: codeType.value,
+      profile: selection.profile,
+    })
+  }
 }
 
 function handleOpenPrintProfiles() {
@@ -48,7 +76,7 @@ function handleOpenPrintProfiles() {
       <section class="generator-panel">
         <GeneratorSection
           :code-type="codeType"
-          :generated-value="generatedValueF"
+          :generated-value="generatedValue"
           @generate="handleGenerate"
           @change-code-type="handleCodeTypeChange"
         />
@@ -58,6 +86,7 @@ function handleOpenPrintProfiles() {
           :code-type="codeType"
           :has-result="hasResult"
           :is-favorite="isFavorite"
+          :profiles-version="profilesVersion"
           @edit="handleEdit"
           @print="handlePrint"
           @toggle-favorite="handleToggleFavorite"
@@ -66,7 +95,18 @@ function handleOpenPrintProfiles() {
         />
       </section>
     </main>
-    <printProfilesModal :open="printProfilesOpen" @close="printProfilesOpen = false" />
+
+    <PrintModal
+      :open="printModalOpen"
+      @close="printModalOpen = false"
+      @select="handlePrintSelection"
+    />
+
+    <printProfilesModal
+      :open="printProfilesOpen"
+      @close="printProfilesOpen = false"
+      @profiles-updated="handleProfilesUpdated"
+    />
   </div>
 </template>
 
@@ -100,6 +140,7 @@ function handleOpenPrintProfiles() {
 }
 
 /* Tablet */
+
 @media (max-width: 850px) {
   .generator-panel {
     grid-template-columns: 1fr;
@@ -108,6 +149,7 @@ function handleOpenPrintProfiles() {
 }
 
 /* Mobile */
+
 @media (max-width: 590px) {
   .qr-app {
     width: min(100% - 20px, 760px);

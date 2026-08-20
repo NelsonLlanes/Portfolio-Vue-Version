@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 defineProps({
   open: {
@@ -8,8 +8,9 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'profiles-updated'])
 
+const STORAGE_KEY = 'quickqr-print-profiles'
 const activeView = ref('profiles')
 const activeProfileId = ref(null)
 const activeLayoutMode = ref('barcode')
@@ -224,8 +225,6 @@ function convertElementForOrientation(
   newPaperWidth,
   newPaperHeight,
 ) {
-  let physicalX = (element.x / 100) * oldPaperWidth
-
   let physicalY = (element.y / 100) * oldPaperHeight
 
   let physicalWidth = (element.width / 100) * oldPaperWidth
@@ -239,7 +238,7 @@ function convertElementForOrientation(
 
   const maxPhysicalY = Math.max(0, newPaperHeight - physicalHeight)
 
-  physicalX = (newPaperWidth - physicalWidth) / 2
+  const physicalX = (newPaperWidth - physicalWidth) / 2
 
   physicalY = clamp(physicalY, 0, maxPhysicalY)
 
@@ -331,6 +330,44 @@ function setLayoutMode(mode) {
 
 function selectLayoutElement(elementName) {
   selectedLayoutElement.value = elementName
+}
+
+function centerLayoutHorizontally() {
+  if (!activeLayout.value) {
+    return
+  }
+
+  const { text, code } = activeLayout.value
+
+  text.x = Number(((100 - text.width) / 2).toFixed(2))
+  code.x = Number(((100 - code.width) / 2).toFixed(2))
+
+  selectedLayoutElement.value = null
+}
+
+function centerLayoutVertically() {
+  if (!activeLayout.value) {
+    return
+  }
+
+  const { text, code } = activeLayout.value
+
+  // Calculate the complete height occupied by TEXT + CODE.
+  const groupTop = Math.min(text.y, code.y)
+  const groupBottom = Math.max(text.y + text.height, code.y + code.height)
+
+  const groupHeight = groupBottom - groupTop
+
+  // Position the entire group in the vertical center of the paper.
+  const targetTop = (100 - groupHeight) / 2
+  const offsetY = targetTop - groupTop
+
+  // Apply exactly the same movement to both elements.
+  // Their sizes and the distance between them remain unchanged.
+  text.y = Number((text.y + offsetY).toFixed(2))
+  code.y = Number((code.y + offsetY).toFixed(2))
+
+  selectedLayoutElement.value = null
 }
 
 /* ---------------------------------------------------------
@@ -543,6 +580,37 @@ function stopResize() {
 
 function toggleProfile(profile) {
   profile.enabled = !profile.enabled
+  saveProfiles()
+}
+
+function saveProfiles() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles.value))
+
+    emit('profiles-updated')
+
+    return true
+  } catch (error) {
+    console.error('Could not save print profiles:', error)
+    return false
+  }
+}
+
+function saveActiveProfile() {
+  if (!activeProfile.value) {
+    return
+  }
+
+  stopDrag()
+  stopResize()
+
+  const saved = saveProfiles()
+
+  if (!saved) {
+    return
+  }
+
+  backToProfiles()
 }
 
 function editProfile(profile) {
@@ -575,6 +643,25 @@ function closeModal() {
 /* ---------------------------------------------------------
    CLEANUP
 --------------------------------------------------------- */
+onMounted(() => {
+  try {
+    const savedProfiles = localStorage.getItem(STORAGE_KEY)
+
+    if (!savedProfiles) {
+      return
+    }
+
+    const parsedProfiles = JSON.parse(savedProfiles)
+
+    if (!Array.isArray(parsedProfiles)) {
+      return
+    }
+
+    profiles.value = parsedProfiles
+  } catch (error) {
+    console.error('Could not load print profiles:', error)
+  }
+})
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointermove', handleDrag)
@@ -814,8 +901,7 @@ onBeforeUnmount(() => {
           <div class="layout-editor">
             <div class="layout-editor__header">
               <div>
-                <span class="profile-field__title"> Layout </span>
-
+                <span class="profile-field__title">Layout</span>
                 <small>
                   {{ activeProfile.paper.width }}
                   ×
@@ -849,6 +935,28 @@ onBeforeUnmount(() => {
                   QR Code
                 </button>
               </div>
+            </div>
+
+            <div class="layout-actions">
+              <button
+                class="layout-action"
+                type="button"
+                title="Center text and code horizontally"
+                @click="centerLayoutHorizontally"
+              >
+                ↔
+                <span>Center horizontally</span>
+              </button>
+
+              <button
+                class="layout-action"
+                type="button"
+                title="Center the complete layout vertically"
+                @click="centerLayoutVertically"
+              >
+                ↕
+                <span>Center layout vertically</span>
+              </button>
             </div>
 
             <div class="paper-preview-area">
@@ -909,7 +1017,9 @@ onBeforeUnmount(() => {
         <footer class="profile-modal__footer">
           <button class="tool-button" type="button" @click="backToProfiles">Back</button>
 
-          <button class="tool-button tool-button--primary" type="button">Save profile</button>
+          <button class="tool-button tool-button--primary" type="button" @click="saveActiveProfile">
+            Save profile
+          </button>
         </footer>
       </template>
     </section>
@@ -1387,6 +1497,50 @@ onBeforeUnmount(() => {
   color: var(--tool-text-muted);
 
   font-size: 10px;
+}
+
+.layout-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.layout-action {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 0 11px;
+
+  border: 1px solid var(--tool-border);
+  border-radius: 9px;
+
+  background: var(--tool-surface);
+  color: var(--tool-text-muted);
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.layout-action:hover {
+  border-color: var(--tool-primary);
+  background: var(--tool-surface-soft);
+  color: var(--tool-primary);
+}
+
+.layout-action:active {
+  transform: translateY(1px);
 }
 
 /* PAPER */
