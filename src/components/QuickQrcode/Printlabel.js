@@ -22,8 +22,17 @@ function createBarcode(value) {
     height: 120,
   })
 
+  const width = Number(svg.getAttribute('width'))
+  const height = Number(svg.getAttribute('height'))
+
+  if (Number.isFinite(width) && Number.isFinite(height)) {
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  }
+
   svg.removeAttribute('width')
   svg.removeAttribute('height')
+
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
 
   return new XMLSerializer().serializeToString(svg)
 }

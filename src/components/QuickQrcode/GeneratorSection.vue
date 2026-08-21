@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   codeType: {
@@ -10,17 +10,48 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  history: {
+    type: Array,
+    default: () => [],
+  },
+  favorites: {
+    type: Array,
+    default: () => [],
+  },
+  quickStarts: {
+    type: Array,
+    default: () => [],
+  },
+  editVersion: {
+    type: Number,
+    default: 0,
+  },
 })
 
-const emit = defineEmits(['generate', 'change-code-type'])
+const emit = defineEmits([
+  'generate',
+  'change-code-type',
+  'select-saved-code',
+  'clear-history',
+  'remove-favorite',
+  'add-quick-start',
+  'remove-quick-start',
+])
 
 const inputValue = ref('')
 const errorMessage = ref('')
 const openMenu = ref(null)
+const quickMenusRef = ref(null)
 
-const history = ref([])
-const favorites = ref([])
-const templates = ref([])
+// Input
+
+watch(
+  () => props.editVersion,
+  () => {
+    inputValue.value = props.generatedValue
+    errorMessage.value = ''
+  },
+)
 
 function isValidCode128(value) {
   return /^[\x20-\x7E]+$/.test(value)
@@ -50,10 +81,13 @@ function generateCode() {
 
   if (props.codeType === 'barcode' && !isValidCode128(value)) {
     emit('change-code-type', 'qr')
+
     emit('generate', {
       value,
       type: 'qr',
     })
+
+    inputValue.value = ''
     return
   }
 
@@ -61,23 +95,109 @@ function generateCode() {
     value,
     type: props.codeType,
   })
+
+  inputValue.value = ''
 }
+
+// Menus
 
 function toggleMenu(menu) {
   openMenu.value = openMenu.value === menu ? null : menu
 }
 
-function clearHistory() {
-  history.value = []
+function selectSavedCode(item) {
+  if (!item) {
+    return
+  }
 
-  if (openMenu.value === 'history') {
+  openMenu.value = null
+  errorMessage.value = ''
+
+  emit('select-saved-code', item)
+}
+
+function selectQuickStart(item) {
+  if (!item) {
+    return
+  }
+
+  inputValue.value = item.value
+  openMenu.value = null
+  errorMessage.value = ''
+
+  emit('change-code-type', item.type)
+}
+
+function clearHistory() {
+  openMenu.value = null
+  emit('clear-history')
+}
+
+function removeFavorite(item) {
+  emit('remove-favorite', item)
+}
+
+// Quick starts
+
+function createQuickStart() {
+  const value = inputValue.value.trim()
+
+  if (!value) {
+    errorMessage.value = 'Enter a SKU or text.'
+    openMenu.value = null
+    return
+  }
+
+  if (props.codeType === 'barcode' && !isValidCode128(value)) {
+    errorMessage.value = 'This text is not valid for barcode.'
+    openMenu.value = null
+    return
+  }
+
+  errorMessage.value = ''
+
+  emit('add-quick-start', {
+    value,
+    type: props.codeType,
+  })
+
+  inputValue.value = ''
+  openMenu.value = null
+}
+
+function removeQuickStart(item) {
+  emit('remove-quick-start', item)
+}
+
+// Dropdowns
+
+function handleDocumentClick(event) {
+  if (!openMenu.value) {
+    return
+  }
+
+  if (quickMenusRef.value?.contains(event.target)) {
+    return
+  }
+
+  openMenu.value = null
+}
+
+function handleDocumentKeydown(event) {
+  if (event.key === 'Escape') {
     openMenu.value = null
   }
 }
 
-function createTemplate() {
-  // La funcionalidad real se agregará cuando migremos templates.
-}
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('keydown', handleDocumentKeydown)
+})
 </script>
 
 <template>
@@ -115,7 +235,7 @@ function createTemplate() {
       </button>
     </div>
 
-    <!-- Generator form -->
+    <!-- Form -->
 
     <form class="sku-form" novalidate @submit.prevent="generateCode">
       <label class="sr-only" for="skuInput">SKU or text</label>
@@ -147,7 +267,7 @@ function createTemplate() {
 
     <!-- Quick menus -->
 
-    <section class="quick-menus" aria-label="Saved codes and templates">
+    <section ref="quickMenusRef" class="quick-menus" aria-label="Saved codes and quick starts">
       <!-- History -->
 
       <div class="menu-control">
@@ -159,7 +279,9 @@ function createTemplate() {
         >
           <span>
             <small>Recent history</small>
-            <strong>{{ history.length ? history.length : 'Empty' }}</strong>
+            <strong>
+              {{ props.history.length ? props.history.length : 'Empty' }}
+            </strong>
           </span>
 
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -169,10 +291,27 @@ function createTemplate() {
 
         <div v-if="openMenu === 'history'" class="dropdown-menu">
           <div class="dropdown-list">
-            <p v-if="!history.length" class="dropdown-empty">No recent codes</p>
+            <p v-if="!props.history.length" class="dropdown-empty">No recent codes</p>
+
+            <button
+              v-for="item in props.history"
+              :key="`${item.type}-${item.value}`"
+              class="dropdown-item"
+              type="button"
+              @click="selectSavedCode(item)"
+            >
+              <span class="dropdown-item__value">
+                {{ item.value }}
+              </span>
+            </button>
           </div>
 
-          <button v-if="history.length" class="dropdown-footer" type="button" @click="clearHistory">
+          <button
+            v-if="props.history.length"
+            class="dropdown-footer"
+            type="button"
+            @click="clearHistory"
+          >
             Clear history
           </button>
         </div>
@@ -189,7 +328,9 @@ function createTemplate() {
         >
           <span>
             <small>Favorites</small>
-            <strong>{{ favorites.length ? favorites.length : 'Empty' }}</strong>
+            <strong>
+              {{ props.favorites.length ? props.favorites.length : 'Empty' }}
+            </strong>
           </span>
 
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -199,23 +340,46 @@ function createTemplate() {
 
         <div v-if="openMenu === 'favorites'" class="dropdown-menu">
           <div class="dropdown-list">
-            <p v-if="!favorites.length" class="dropdown-empty">No favorites</p>
+            <p v-if="!props.favorites.length" class="dropdown-empty">No favorites</p>
+
+            <div
+              v-for="item in props.favorites"
+              :key="`${item.type}-${item.value}`"
+              class="saved-item"
+            >
+              <button class="dropdown-item" type="button" @click="selectSavedCode(item)">
+                <span class="dropdown-item__value">
+                  {{ item.value }}
+                </span>
+              </button>
+
+              <button
+                class="saved-item-remove"
+                type="button"
+                aria-label="Remove favorite"
+                @click.stop="removeFavorite(item)"
+              >
+                ×
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Templates -->
+      <!-- Quick starts -->
 
       <div class="menu-control">
         <button
           class="menu-trigger"
           type="button"
-          :aria-expanded="openMenu === 'templates'"
-          @click="toggleMenu('templates')"
+          :aria-expanded="openMenu === 'quick-starts'"
+          @click="toggleMenu('quick-starts')"
         >
           <span>
             <small>Quick starts</small>
-            <strong>{{ templates.length ? templates.length : 'Empty' }}</strong>
+            <strong>
+              {{ props.quickStarts.length ? props.quickStarts.length : 'Empty' }}
+            </strong>
           </span>
 
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -223,17 +387,38 @@ function createTemplate() {
           </svg>
         </button>
 
-        <div v-if="openMenu === 'templates'" class="dropdown-menu dropdown-menu--right">
+        <div v-if="openMenu === 'quick-starts'" class="dropdown-menu dropdown-menu--right">
           <div class="dropdown-list">
-            <p v-if="!templates.length" class="dropdown-empty">No quick starts</p>
+            <p v-if="!props.quickStarts.length" class="dropdown-empty">No quick starts</p>
+
+            <div
+              v-for="item in props.quickStarts"
+              :key="`${item.type}-${item.value}`"
+              class="saved-item"
+            >
+              <button class="dropdown-item" type="button" @click="selectQuickStart(item)">
+                <span class="dropdown-item__value">
+                  {{ item.value }}
+                </span>
+              </button>
+
+              <button
+                class="saved-item-remove"
+                type="button"
+                aria-label="Remove quick start"
+                @click.stop="removeQuickStart(item)"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <button
             class="dropdown-footer dropdown-footer--primary"
             type="button"
-            @click="createTemplate"
+            @click="createQuickStart"
           >
-            Create template
+            + Add current code
           </button>
         </div>
       </div>
@@ -246,9 +431,7 @@ function createTemplate() {
   min-width: 0;
 }
 
-/* =========================
-   Intro
-========================= */
+/* Intro */
 
 .generator-intro {
   text-align: left;
@@ -261,9 +444,7 @@ function createTemplate() {
   letter-spacing: -0.045em;
 }
 
-/* =========================
-   Code type
-========================= */
+/* Code type */
 
 .code-type {
   display: grid;
@@ -302,9 +483,7 @@ function createTemplate() {
   box-shadow: var(--tool-shadow-sm);
 }
 
-/* =========================
-   Form
-========================= */
+/* Form */
 
 .sku-form {
   margin-top: 14px;
@@ -333,9 +512,7 @@ function createTemplate() {
   font-size: 11px;
 }
 
-/* =========================
-   Quick menus
-========================= */
+/* Quick menus */
 
 .quick-menus {
   position: relative;
@@ -418,9 +595,7 @@ function createTemplate() {
   transform: rotate(180deg);
 }
 
-/* =========================
-   Dropdowns
-========================= */
+/* Dropdowns */
 
 .dropdown-menu {
   position: absolute;
@@ -463,6 +638,41 @@ function createTemplate() {
   text-align: center;
 }
 
+.dropdown-item {
+  width: 100%;
+
+  display: block;
+
+  padding: 10px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: var(--tool-text);
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--tool-surface-soft);
+}
+
+.dropdown-item__value {
+  display: block;
+
+  min-width: 0;
+  overflow: hidden;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dropdown-footer {
   width: 100%;
 
@@ -485,9 +695,40 @@ function createTemplate() {
   color: var(--tool-primary);
 }
 
-/* =========================
-   Accessibility
-========================= */
+/* Saved items */
+
+.saved-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.saved-item-remove {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--tool-text-muted);
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.saved-item-remove:hover {
+  background: var(--tool-surface-soft);
+  color: var(--tool-danger);
+}
+
+/* Accessibility */
 
 .sr-only {
   position: absolute;
@@ -507,9 +748,7 @@ function createTemplate() {
   border: 0;
 }
 
-/* =========================
-   Mobile
-========================= */
+/* Mobile */
 
 @media (max-width: 590px) {
   .code-type {
@@ -552,14 +791,23 @@ function createTemplate() {
   }
 
   .dropdown-menu {
-    position: fixed;
+    position: absolute;
 
-    top: 238px;
-    right: 10px;
-    left: 10px;
+    top: calc(100% + 8px);
+    left: 0;
+    right: auto;
 
-    width: auto;
+    width: calc(300% + 12px);
     max-height: 52dvh;
+  }
+
+  .menu-control:nth-child(2) .dropdown-menu {
+    left: calc(-100% - 6px);
+  }
+
+  .menu-control:nth-child(3) .dropdown-menu {
+    right: 0;
+    left: auto;
   }
 }
 </style>
