@@ -2,15 +2,17 @@
 import { ref } from 'vue'
 
 import GeneratorSection from '@/components/QuickQrcode/GeneratorSection.vue'
-import QuickQrHeader from '@/components/QuickQrcode/QuickQrHeader.vue'
-import ResultSection from '@/components/QuickQrcode/ResultSection.vue'
 import printProfilesModal from '@/components/QuickQrcode/printProfilesModal.vue'
 import { printGenericLabel, printLabel } from '@/components/QuickQrcode/Printlabel'
+import QuickQrHeader from '@/components/QuickQrcode/QuickQrHeader.vue'
+import ResultSection from '@/components/QuickQrcode/ResultSection.vue'
 
 const HISTORY_KEY = 'quickqr-history'
 const FAVORITES_KEY = 'quickqr-favorites'
 const QUICK_STARTS_KEY = 'quickqr-quick-starts'
 const HISTORY_LIMIT = 10
+
+const EXTENSION_ID = 'mkkpcaidnahcelelnecicpbeafikoogn'
 
 const generatedValue = ref('')
 const codeType = ref('barcode')
@@ -22,6 +24,7 @@ const favorites = ref(loadStoredArray(FAVORITES_KEY))
 const quickStarts = ref(loadStoredArray(QUICK_STARTS_KEY))
 
 const printProfilesOpen = ref(false)
+
 const profilesVersion = ref(0)
 const editVersion = ref(0)
 
@@ -238,6 +241,32 @@ function handleOpenPrintProfiles() {
   printProfilesOpen.value = true
 }
 
+// Shortcut
+
+function handleChangeShortcut() {
+  if (!window.chrome?.runtime?.sendMessage) {
+    console.error('Chrome extension messaging is not available.')
+    return
+  }
+
+  chrome.runtime.sendMessage(
+    EXTENSION_ID,
+    {
+      type: 'QUICK_QR_OPEN_SHORTCUTS',
+    },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Could not contact Quick QR extension:', chrome.runtime.lastError.message)
+        return
+      }
+
+      if (!response?.ok) {
+        console.error(response?.error || 'Could not open extension shortcut settings.')
+      }
+    },
+  )
+}
+
 // Print
 
 async function handlePrint(selection) {
@@ -297,6 +326,7 @@ async function handlePrint(selection) {
           @toggle-favorite="handleToggleFavorite"
           @change-code-type="handleCodeTypeChange"
           @open-print-profiles="handleOpenPrintProfiles"
+          @change-shortcut="handleChangeShortcut"
         />
       </section>
     </main>

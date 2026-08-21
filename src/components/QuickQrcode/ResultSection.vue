@@ -23,6 +23,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+
   profilesVersion: {
     type: Number,
     default: 0,
@@ -35,6 +36,7 @@ const emit = defineEmits([
   'toggle-favorite',
   'change-code-type',
   'open-print-profiles',
+  'change-shortcut',
 ])
 
 const STORAGE_KEY = 'quickqr-print-profiles'
@@ -110,7 +112,12 @@ function isValidCode128(value) {
 }
 
 function changeCodeType(type) {
-  if (type === 'barcode' && !isValidCode128(props.generatedValue)) {
+  if (
+    type === 'barcode' &&
+    props.hasResult &&
+    props.generatedValue &&
+    !isValidCode128(props.generatedValue)
+  ) {
     return
   }
 
@@ -120,6 +127,11 @@ function changeCodeType(type) {
 
 function openPrintProfiles() {
   emit('open-print-profiles')
+  closeSettings()
+}
+
+function changeShortcut() {
+  emit('change-shortcut')
   closeSettings()
 }
 
@@ -191,63 +203,75 @@ watch(settingsOpen, () => {
     <!-- Result -->
 
     <div class="qr-stage">
+      <!-- Settings -->
+
+      <div class="code-settings">
+        <button
+          class="settings-button"
+          type="button"
+          aria-label="Code settings"
+          :aria-expanded="settingsOpen"
+          aria-controls="codeSettingsMenu"
+          title="Code settings"
+          @click="toggleSettings"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.2 7.2 0 0 0-1.62-.94L14.38 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4L9.2 5.32c-.58.24-1.12.56-1.62.94L5.19 5.3a.49.49 0 0 0-.61.22L2.66 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.05.31-.08.65-.08.94 0 .31.03.63.08.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.12.22.38.31.61.22l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.52c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.52c.58-.24 1.12-.56 1.62-.94l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"
+            />
+          </svg>
+        </button>
+
+        <div v-if="settingsOpen" id="codeSettingsMenu" class="code-settings-menu">
+          <div class="settings-section" role="radiogroup" aria-label="Code type">
+            <span class="settings-label">Code type</span>
+
+            <button
+              type="button"
+              role="radio"
+              :aria-checked="codeType === 'barcode'"
+              :class="{ 'is-active': codeType === 'barcode' }"
+              @click="changeCodeType('barcode')"
+            >
+              Barcode
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              :aria-checked="codeType === 'qr'"
+              :class="{ 'is-active': codeType === 'qr' }"
+              @click="changeCodeType('qr')"
+            >
+              QR
+            </button>
+          </div>
+
+          <button class="settings-link" type="button" @click="openPrintProfiles">
+            Print profiles
+          </button>
+
+          <button
+            class="settings-link settings-link--shortcut"
+            type="button"
+            @click="changeShortcut"
+          >
+            Change shortcut
+          </button>
+        </div>
+      </div>
+
+      <!-- Placeholder -->
+
       <div v-if="!hasResult" class="qr-placeholder" aria-hidden="true">
         <div class="placeholder-grid"></div>
 
         <span>Your code will appear here</span>
       </div>
 
+      <!-- Result -->
+
       <div v-else class="qr-result">
-        <!-- Settings -->
-
-        <div class="code-settings">
-          <button
-            class="settings-button"
-            type="button"
-            aria-label="Code settings"
-            :aria-expanded="settingsOpen"
-            aria-controls="codeSettingsMenu"
-            title="Code settings"
-            @click="toggleSettings"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.2 7.2 0 0 0-1.62-.94L14.38 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4L9.2 5.32c-.58.24-1.12.56-1.62.94L5.19 5.3a.49.49 0 0 0-.61.22L2.66 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.05.31-.08.65-.08.94 0 .31.03.63.08.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.12.22.38.31.61.22l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.52c.04.24.24.4.49.4h3.84c.25 0 .45-.16.49-.4l.36-2.52c.58-.24 1.12-.56 1.62-.94l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.02-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"
-              />
-            </svg>
-          </button>
-
-          <div v-if="settingsOpen" id="codeSettingsMenu" class="code-settings-menu">
-            <div class="settings-section" role="radiogroup" aria-label="Code type">
-              <span class="settings-label">Code type</span>
-
-              <button
-                type="button"
-                role="radio"
-                :aria-checked="codeType === 'barcode'"
-                :class="{ 'is-active': codeType === 'barcode' }"
-                @click="changeCodeType('barcode')"
-              >
-                Barcode
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                :aria-checked="codeType === 'qr'"
-                :class="{ 'is-active': codeType === 'qr' }"
-                @click="changeCodeType('qr')"
-              >
-                QR
-              </button>
-            </div>
-
-            <button class="settings-link" type="button" @click="openPrintProfiles">
-              Print profiles
-            </button>
-          </div>
-        </div>
-
         <!-- Edit -->
 
         <button
@@ -372,7 +396,7 @@ watch(settingsOpen, () => {
 
   background: linear-gradient(145deg, #fbfcfe, #f2f6fb);
 
-  overflow: hidden;
+  overflow: visible;
 }
 
 .qr-placeholder {
@@ -479,20 +503,16 @@ watch(settingsOpen, () => {
 /* Settings */
 
 .code-settings {
-  display: block;
-
   position: absolute;
 
-  left: 0;
-  top: 0;
+  left: 22px;
+  top: 22px;
 
-  z-index: 5;
+  z-index: 10;
 }
 
 .settings-button,
 .edit-code {
-  top: 0;
-
   width: 40px;
   height: 40px;
 
@@ -526,7 +546,7 @@ watch(settingsOpen, () => {
   left: 0;
   top: 46px;
 
-  min-width: 170px;
+  min-width: 185px;
 
   padding: 7px;
 
@@ -537,7 +557,7 @@ watch(settingsOpen, () => {
 
   box-shadow: var(--tool-shadow-sm);
 
-  z-index: 8;
+  z-index: 20;
 }
 
 .settings-section {
@@ -582,6 +602,10 @@ watch(settingsOpen, () => {
   cursor: pointer;
 }
 
+.code-settings-menu button:hover {
+  background: var(--nt-surface-soft);
+}
+
 .code-settings-menu button.is-active {
   background: var(--nt-surface-soft);
 
@@ -597,12 +621,19 @@ watch(settingsOpen, () => {
   color: var(--nt-primary) !important;
 }
 
+.settings-link--shortcut {
+  margin-top: 2px !important;
+
+  border-top: 0 !important;
+}
+
 /* Edit */
 
 .edit-code {
   position: absolute;
 
   right: 0;
+  top: 0;
 
   display: grid;
   place-items: center;
@@ -744,10 +775,13 @@ watch(settingsOpen, () => {
     max-height: 230px;
   }
 
+  .code-settings {
+    left: 12px;
+    top: 12px;
+  }
+
   .settings-button,
   .edit-code {
-    top: 0;
-
     width: 38px;
     height: 38px;
   }

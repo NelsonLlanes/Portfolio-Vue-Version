@@ -11,6 +11,7 @@ defineProps({
 const emit = defineEmits(['close', 'profiles-updated'])
 
 const STORAGE_KEY = 'quickqr-print-profiles'
+const EXTENSION_ID = 'mkkpcaidnahcelelnecicpbeafikoogn'
 const activeView = ref('profiles')
 const activeProfileId = ref(null)
 const activeLayoutMode = ref('barcode')
@@ -587,6 +588,8 @@ function saveProfiles() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles.value))
 
+    syncProfilesWithExtension()
+
     emit('profiles-updated')
 
     return true
@@ -594,6 +597,35 @@ function saveProfiles() {
     console.error('Could not save print profiles:', error)
     return false
   }
+}
+
+function syncProfilesWithExtension() {
+  const chromeRuntime = globalThis.chrome?.runtime
+
+  if (!chromeRuntime?.sendMessage) {
+    return
+  }
+
+  chromeRuntime.sendMessage(
+    EXTENSION_ID,
+    {
+      type: 'QUICK_QR_SYNC',
+      profiles: profiles.value,
+    },
+    (response) => {
+      if (chromeRuntime.lastError) {
+        console.warn('Quick QR extension sync unavailable:', chromeRuntime.lastError.message)
+        return
+      }
+
+      if (!response?.ok) {
+        console.warn('Quick QR extension could not sync profiles.', response)
+        return
+      }
+
+      console.log(`Quick QR extension synced: ${response.profilesReceived} profiles.`)
+    },
+  )
 }
 
 function saveActiveProfile() {
