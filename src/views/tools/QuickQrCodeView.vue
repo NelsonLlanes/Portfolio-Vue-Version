@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 
 import GeneratorSection from '@/components/QuickQrcode/GeneratorSection.vue'
 import printProfilesModal from '@/components/QuickQrcode/printProfilesModal.vue'
@@ -27,6 +27,20 @@ const printProfilesOpen = ref(false)
 
 const profilesVersion = ref(0)
 const editVersion = ref(0)
+
+const resultSectionRef = ref(null)
+
+// Mobile
+
+function isMobileView() {
+  return window.matchMedia('(max-width: 590px)').matches
+}
+
+onMounted(() => {
+  if (isMobileView()) {
+    codeType.value = 'qr'
+  }
+})
 
 // Storage
 
@@ -188,6 +202,36 @@ function handleRemoveQuickStart(item) {
   saveQuickStarts()
 }
 
+// Scroll
+
+async function scrollToGeneratedCode() {
+  if (!isMobileView()) {
+    return
+  }
+
+  await nextTick()
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      const target = resultSectionRef.value
+
+      if (!target) {
+        return
+      }
+
+      const rect = target.getBoundingClientRect()
+      const targetTop = window.scrollY + rect.top
+
+      const offset = Math.max(72, window.innerHeight * 0.16)
+
+      window.scrollTo({
+        top: Math.max(0, targetTop - offset),
+        behavior: 'smooth',
+      })
+    })
+  })
+}
+
 // Generate
 
 function showCode(value, type, addHistory = true) {
@@ -208,8 +252,10 @@ function showCode(value, type, addHistory = true) {
   syncCurrentFavorite()
 }
 
-function handleGenerate(payload) {
+async function handleGenerate(payload) {
   showCode(payload.value, payload.type)
+
+  await scrollToGeneratedCode()
 }
 
 function handleCodeTypeChange(type) {
@@ -229,6 +275,8 @@ function handleSelectSavedCode(item) {
   }
 
   showCode(item.value, item.type, false)
+
+  scrollToGeneratedCode()
 }
 
 // Print profiles
@@ -315,19 +363,21 @@ async function handlePrint(selection) {
           @remove-favorite="handleRemoveFavorite"
         />
 
-        <ResultSection
-          :generated-value="generatedValue"
-          :code-type="codeType"
-          :has-result="hasResult"
-          :is-favorite="isFavorite"
-          :profiles-version="profilesVersion"
-          @edit="handleEdit"
-          @print="handlePrint"
-          @toggle-favorite="handleToggleFavorite"
-          @change-code-type="handleCodeTypeChange"
-          @open-print-profiles="handleOpenPrintProfiles"
-          @change-shortcut="handleChangeShortcut"
-        />
+        <div ref="resultSectionRef" class="result-scroll-target">
+          <ResultSection
+            :generated-value="generatedValue"
+            :code-type="codeType"
+            :has-result="hasResult"
+            :is-favorite="isFavorite"
+            :profiles-version="profilesVersion"
+            @edit="handleEdit"
+            @print="handlePrint"
+            @toggle-favorite="handleToggleFavorite"
+            @change-code-type="handleCodeTypeChange"
+            @open-print-profiles="handleOpenPrintProfiles"
+            @change-shortcut="handleChangeShortcut"
+          />
+        </div>
       </section>
     </main>
 
@@ -368,6 +418,10 @@ async function handlePrint(selection) {
   box-shadow: var(--nt-shadow);
 }
 
+.result-scroll-target {
+  min-width: 0;
+}
+
 /* Tablet */
 
 @media (max-width: 850px) {
@@ -392,6 +446,10 @@ async function handlePrint(selection) {
     padding: 17px 14px;
 
     border-radius: 21px;
+  }
+
+  .result-scroll-target {
+    scroll-margin-top: 72px;
   }
 }
 </style>

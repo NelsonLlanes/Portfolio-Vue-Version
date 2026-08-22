@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   codeType: {
@@ -42,16 +42,46 @@ const inputValue = ref('')
 const errorMessage = ref('')
 const openMenu = ref(null)
 const quickMenusRef = ref(null)
+const skuInputRef = ref(null)
 
 // Input
 
+async function focusInput(moveCursorToEnd = false) {
+  await nextTick()
+
+  const input = skuInputRef.value
+
+  if (!input) {
+    return
+  }
+
+  input.focus()
+
+  if (moveCursorToEnd) {
+    const end = input.value.length
+    input.setSelectionRange(end, end)
+  }
+}
+
 watch(
   () => props.editVersion,
-  () => {
+  async () => {
     inputValue.value = props.generatedValue
     errorMessage.value = ''
+
+    await focusInput(true)
   },
 )
+
+function blurInput() {
+  const input = skuInputRef.value
+
+  if (!input) {
+    return
+  }
+
+  input.blur()
+}
 
 function isValidCode128(value) {
   return /^[\x20-\x7E]+$/.test(value)
@@ -67,19 +97,24 @@ function selectCodeType(type) {
 
   errorMessage.value = ''
   emit('change-code-type', type)
+
+  focusInput()
 }
 
-function generateCode() {
+async function generateCode() {
   const value = inputValue.value.trim()
 
   if (!value) {
     errorMessage.value = 'Enter a SKU or text.'
+    await focusInput()
     return
   }
 
   errorMessage.value = ''
 
   if (props.codeType === 'barcode' && !isValidCode128(value)) {
+    blurInput()
+
     emit('change-code-type', 'qr')
 
     emit('generate', {
@@ -90,6 +125,8 @@ function generateCode() {
     inputValue.value = ''
     return
   }
+
+  blurInput()
 
   emit('generate', {
     value,
@@ -126,6 +163,8 @@ function selectQuickStart(item) {
   errorMessage.value = ''
 
   emit('change-code-type', item.type)
+
+  focusInput(true)
 }
 
 function clearHistory() {
@@ -139,18 +178,20 @@ function removeFavorite(item) {
 
 // Quick starts
 
-function createQuickStart() {
+async function createQuickStart() {
   const value = inputValue.value.trim()
 
   if (!value) {
     errorMessage.value = 'Enter a SKU or text.'
     openMenu.value = null
+    await focusInput()
     return
   }
 
   if (props.codeType === 'barcode' && !isValidCode128(value)) {
     errorMessage.value = 'This text is not valid for barcode.'
     openMenu.value = null
+    await focusInput()
     return
   }
 
@@ -163,6 +204,8 @@ function createQuickStart() {
 
   inputValue.value = ''
   openMenu.value = null
+
+  await focusInput()
 }
 
 function removeQuickStart(item) {
@@ -243,6 +286,7 @@ onBeforeUnmount(() => {
       <div class="sku-row">
         <input
           id="skuInput"
+          ref="skuInputRef"
           v-model="inputValue"
           class="tool-field sku-input"
           name="sku"
@@ -751,10 +795,6 @@ onBeforeUnmount(() => {
 /* Mobile */
 
 @media (max-width: 590px) {
-  .code-type {
-    display: none;
-  }
-
   .generator-intro h1 {
     font-size: 28px;
   }

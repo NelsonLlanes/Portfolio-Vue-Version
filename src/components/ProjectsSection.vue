@@ -18,23 +18,22 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
 
     <div class="projects-grid">
       <!-- Quick QR -->
+
       <article class="project-card project-card--featured">
         <div class="project-media">
-          <a href="/tools/quick-qr" target="_blank" rel="noopener noreferrer">
+          <RouterLink to="/projects/quick-qr">
             <img loading="lazy" decoding="async" :src="quickQrImage" alt="Quick QR application" />
-          </a>
+          </RouterLink>
 
           <span class="project-featured">Featured Project</span>
 
-          <a
+          <RouterLink
             class="project-link"
-            href="/tools/quick-qr"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open Quick QR"
+            to="/projects/quick-qr"
+            aria-label="Open Quick QR project"
           >
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
-          </a>
+          </RouterLink>
         </div>
 
         <div class="project-body">
@@ -55,26 +54,25 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
       </article>
 
       <!-- Inventory & Procurement -->
+
       <article class="project-card">
         <div class="project-media">
-          <a href="projects/inventory-spa.html" target="_blank" rel="noopener noreferrer">
+          <RouterLink to="/projects/inventory-procurement">
             <img
               loading="lazy"
               decoding="async"
               :src="inventoryImage"
               alt="Inventory and Procurement application"
             />
-          </a>
+          </RouterLink>
 
-          <a
+          <RouterLink
             class="project-link"
-            href="projects/inventory-spa.html"
-            target="_blank"
-            rel="noopener noreferrer"
+            to="/projects/inventory-procurement"
             aria-label="Open Inventory and Procurement project"
           >
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
-          </a>
+          </RouterLink>
         </div>
 
         <div class="project-body">
@@ -95,26 +93,25 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
       </article>
 
       <!-- Expense Tracker -->
+
       <article class="project-card">
         <div class="project-media">
-          <a href="projects/expense-tracker.html" target="_blank" rel="noopener noreferrer">
+          <RouterLink to="/projects/expense-tracker">
             <img
               loading="lazy"
               decoding="async"
               :src="expenseTrackerImage"
               alt="Expense Tracker application"
             />
-          </a>
+          </RouterLink>
 
-          <a
+          <RouterLink
             class="project-link"
-            href="projects/expense-tracker.html"
-            target="_blank"
-            rel="noopener noreferrer"
+            to="/projects/expense-tracker"
             aria-label="Open Expense Tracker project"
           >
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
-          </a>
+          </RouterLink>
         </div>
 
         <div class="project-body">
@@ -140,7 +137,9 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
 .projects-intro {
   max-width: 620px;
   margin: 18px auto 0;
+
   color: rgba(233, 238, 252, 0.62);
+
   font-size: 14px;
   line-height: 1.7;
   text-align: center;
@@ -172,6 +171,7 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
 }
 
 /* Featured project */
+
 .project-card--featured {
   grid-column: 1 / -1;
 }
@@ -187,8 +187,10 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
 
 .project-media img {
   display: block;
+
   width: 100%;
   aspect-ratio: 16 / 9;
+
   object-fit: cover;
 
   transition: transform 250ms ease;
@@ -294,6 +296,7 @@ import expenseTrackerImage from '@/assets/images/expensetracker-demo.png'
 }
 
 /* Tablet / Mobile */
+
 @media (max-width: 800px) {
   .projects-grid {
     grid-template-columns: 1fr;

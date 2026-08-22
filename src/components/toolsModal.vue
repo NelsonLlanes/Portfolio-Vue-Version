@@ -80,14 +80,19 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 1000;
+
   display: grid;
   place-items: center;
+
   padding: 1.5rem;
+
+  overflow-y: auto;
 }
 
 .tools-backdrop {
   position: absolute;
   inset: 0;
+
   background: rgba(3, 7, 15, 0.78);
   backdrop-filter: blur(8px);
 }
@@ -97,7 +102,8 @@ onBeforeUnmount(() => {
   z-index: 1;
 
   width: min(100%, 520px);
-  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+
   overflow-y: auto;
 
   padding: 1.5rem;
@@ -105,6 +111,7 @@ onBeforeUnmount(() => {
   background: #111722;
   border: 1px solid #2d3440;
   border-radius: 20px;
+
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
 }
 
@@ -113,12 +120,15 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+
   margin-bottom: 1.5rem;
 }
 
 .tools-eyebrow {
   margin: 0 0 0.35rem;
+
   color: #ff5b4d;
+
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -126,8 +136,10 @@ onBeforeUnmount(() => {
 
 .tools-header h2 {
   margin: 0;
-  font-size: 1.7rem;
+
   color: #fff;
+
+  font-size: 1.7rem;
 }
 
 .tools-close {
@@ -139,6 +151,7 @@ onBeforeUnmount(() => {
 
   color: #fff;
   background: #181f2b;
+
   border: 1px solid #303744;
   border-radius: 10px;
 
@@ -167,6 +180,7 @@ onBeforeUnmount(() => {
   text-decoration: none;
 
   background: #0d131d;
+
   border: 1px solid #2b323e;
   border-radius: 14px;
 
@@ -189,6 +203,7 @@ onBeforeUnmount(() => {
 
   color: #ff5b4d;
   background: rgba(255, 91, 77, 0.1);
+
   border: 1px solid rgba(255, 91, 77, 0.35);
   border-radius: 12px;
 }
@@ -196,6 +211,7 @@ onBeforeUnmount(() => {
 .tool-item-copy {
   display: grid;
   gap: 0.2rem;
+
   min-width: 0;
 }
 
@@ -214,20 +230,27 @@ onBeforeUnmount(() => {
 
 .tools-empty-note {
   margin: 1.25rem 0 0;
+
   color: #7f8998;
+
   font-size: 0.78rem;
   line-height: 1.6;
 }
 
+/* Mobile */
+
 @media (max-width: 480px) {
   .tools-modal {
+    place-items: center;
     padding: 1rem;
-    align-items: end;
   }
 
   .tools-panel {
     width: 100%;
+    max-height: calc(100dvh - 2rem);
+
     padding: 1.25rem;
+
     border-radius: 18px;
   }
 
